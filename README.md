@@ -321,7 +321,6 @@ Key points
 - The package exposes an abstract model `AbstractBillingAccount` that has the minimal fields and helper methods:
   - stripe_customer_id
   - stripe_subscription_id
-  - seats
   - manager_user
   - get_or_create_stripe_customer(stripe_module, **kwargs)
   - has_active_subscription()

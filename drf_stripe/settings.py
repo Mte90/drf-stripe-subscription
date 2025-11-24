@@ -23,6 +23,8 @@ DEFAULTS = {
     # If None, billing-account flows are disabled and legacy per-user behaviour is used.
     # Example: "myapp.OrganizationBillingAccount"
     "BILLING_ACCOUNT_MODEL": None,
+    # Default quantity for subscription line items.
+    "DEFAULT_MAX_SUBSCRIPTION_QUANTITY": 1,
 }
 
 
