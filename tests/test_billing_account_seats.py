@@ -1,5 +1,5 @@
 """
-Test that the DEFAULT_SUBSCRIPTION_QUANTITY setting works correctly for subscription quantities.
+Test that the DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting works correctly for subscription quantities.
 """
 from django.test import TestCase, override_settings
 from drf_stripe.settings import drf_stripe_settings
@@ -7,18 +7,18 @@ from drf_stripe.models import AbstractBillingAccount, get_drf_stripe_user_model
 
 
 class TestBillingAccountSeats(TestCase):
-    """Test DEFAULT_SUBSCRIPTION_QUANTITY setting behavior for subscription quantities."""
+    """Test DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting behavior for subscription quantities."""
 
     def test_default_subscription_quantity_setting_exists(self):
-        """Verify the DEFAULT_SUBSCRIPTION_QUANTITY setting is accessible."""
-        self.assertEqual(drf_stripe_settings.DEFAULT_SUBSCRIPTION_QUANTITY, 1)
+        """Verify the DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting is accessible."""
+        self.assertEqual(drf_stripe_settings.DEFAULT_MAX_SUBSCRIPTION_QUANTITY, 1)
 
-    @override_settings(DRF_STRIPE={"DEFAULT_SUBSCRIPTION_QUANTITY": 5})
+    @override_settings(DRF_STRIPE={"DEFAULT_MAX_SUBSCRIPTION_QUANTITY": 5})
     def test_default_subscription_quantity_can_be_overridden(self):
-        """Verify the DEFAULT_SUBSCRIPTION_QUANTITY setting can be overridden."""
+        """Verify the DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting can be overridden."""
         # Need to reload settings after override
         drf_stripe_settings.reload()
-        self.assertEqual(drf_stripe_settings.DEFAULT_SUBSCRIPTION_QUANTITY, 5)
+        self.assertEqual(drf_stripe_settings.DEFAULT_MAX_SUBSCRIPTION_QUANTITY, 5)
         # Reload again to restore default
         drf_stripe_settings.reload()
 
@@ -30,7 +30,7 @@ class TestBillingAccountSeats(TestCase):
             pass
         
         instance = MockBillingAccountWithoutSeats()
-        quantity = getattr(instance, "seats", drf_stripe_settings.DEFAULT_SUBSCRIPTION_QUANTITY)
+        quantity = getattr(instance, "seats", drf_stripe_settings.DEFAULT_MAX_SUBSCRIPTION_QUANTITY)
         self.assertEqual(quantity, 1)
 
 

@@ -24,7 +24,7 @@ DEFAULTS = {
     # Example: "myapp.OrganizationBillingAccount"
     "BILLING_ACCOUNT_MODEL": None,
     # Default quantity for subscription line items.
-    "DEFAULT_SUBSCRIPTION_QUANTITY": 1,
+    "DEFAULT_MAX_SUBSCRIPTION_QUANTITY": 1,
 }
 
 

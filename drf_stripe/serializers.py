@@ -193,7 +193,7 @@ class CheckoutRequestSerializer(serializers.Serializer):
                 checkout_session = stripe_module.checkout.Session.create(
                     payment_method_types=drf_stripe_settings.DEFAULT_PAYMENT_METHOD_TYPES,
                     mode=drf_stripe_settings.DEFAULT_CHECKOUT_MODE,
-                    line_items=[{"price": price_id, "quantity": getattr(billing_account_instance, "seats", drf_stripe_settings.DEFAULT_SUBSCRIPTION_QUANTITY)}],
+                    line_items=[{"price": price_id, "quantity": getattr(billing_account_instance, "seats", drf_stripe_settings.DEFAULT_MAX_SUBSCRIPTION_QUANTITY)}],
                     customer=customer_id,
                     success_url=f"{drf_stripe_settings.FRONT_END_BASE_URL}/{drf_stripe_settings.CHECKOUT_SUCCESS_URL_PATH}",
                     cancel_url=f"{drf_stripe_settings.FRONT_END_BASE_URL}/{drf_stripe_settings.CHECKOUT_CANCEL_URL_PATH}",
