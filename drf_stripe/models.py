@@ -26,7 +26,12 @@ def get_drf_stripe_user_model():
 
 class StripeUser(models.Model):
     """Link between a Django user and a Stripe Customer (legacy per-user flow)."""
-    user = models.OneToOneField(get_drf_stripe_user_model(), on_delete=models.CASCADE, related_name='stripe_user', primary_key=True)
+    user = models.OneToOneField(
+        get_drf_stripe_user_model_name(),
+        on_delete=models.CASCADE,
+        related_name='stripe_user',
+        primary_key=True
+    )
     customer_id = models.CharField(max_length=128, null=True)
 
     @property
@@ -98,7 +103,13 @@ class AbstractBillingAccount(models.Model):
     stripe_customer_id = models.CharField(max_length=256, null=True, blank=True)
     stripe_subscription_id = models.CharField(max_length=256, null=True, blank=True)
     seats = models.PositiveIntegerField(default=1)
-    manager_user = models.ForeignKey(get_drf_stripe_user_model(), null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    manager_user = models.ForeignKey(
+        get_drf_stripe_user_model_name(),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+"
+    )
 
     class Meta:
         abstract = True
