@@ -1,5 +1,5 @@
 """
-Test that the DEFAULT_SUBSCRIPTION_QUANTITY setting works correctly.
+Test that the DEFAULT_SUBSCRIPTION_QUANTITY setting works correctly for subscription quantities.
 """
 from django.test import TestCase, override_settings
 from drf_stripe.settings import drf_stripe_settings
@@ -7,7 +7,7 @@ from drf_stripe.models import AbstractBillingAccount, get_drf_stripe_user_model
 
 
 class TestBillingAccountSeats(TestCase):
-    """Test seats/quantity behavior with new DEFAULT_SUBSCRIPTION_QUANTITY setting."""
+    """Test DEFAULT_SUBSCRIPTION_QUANTITY setting behavior for subscription quantities."""
 
     def test_default_subscription_quantity_setting_exists(self):
         """Verify the DEFAULT_SUBSCRIPTION_QUANTITY setting is accessible."""
