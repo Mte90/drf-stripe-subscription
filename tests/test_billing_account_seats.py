@@ -3,11 +3,8 @@ Test that the DEFAULT_SUBSCRIPTION_QUANTITY setting works correctly
 and that custom seats fields on billing accounts are respected.
 """
 from django.test import TestCase, override_settings
-from django.contrib.contenttypes.models import ContentType
-from unittest.mock import Mock, patch, MagicMock
 from drf_stripe.settings import drf_stripe_settings
 from drf_stripe.models import AbstractBillingAccount, get_drf_stripe_user_model
-from drf_stripe.serializers import CheckoutRequestSerializer
 
 
 class TestBillingAccountSeats(TestCase):
@@ -57,20 +54,26 @@ class TestCheckoutSerializerWithBillingAccount(TestCase):
         # Create a test user
         User = get_drf_stripe_user_model()
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
-
-    def test_checkout_uses_custom_seats_when_present(self):
-        """Test that checkout uses custom seats field when billing account has it."""
-        # Create a mock billing account WITH seats field
-        class MockBillingAccountWithSeats:
+        
+        # Define reusable mock classes
+        class MockBillingAccountBase:
+            """Base mock billing account."""
             pk = 1
             stripe_customer_id = None
-            seats = 7  # Custom seats value
             
             def get_or_create_stripe_customer(self, stripe_module, **kwargs):
                 return "cus_test123"
             
             def can_manage_billing(self, user):
                 return True
+        
+        self.MockBillingAccountBase = MockBillingAccountBase
+
+    def test_checkout_uses_custom_seats_when_present(self):
+        """Test that checkout uses custom seats field when billing account has it."""
+        # Create a mock billing account WITH seats field
+        class MockBillingAccountWithSeats(self.MockBillingAccountBase):
+            seats = 7  # Custom seats value
         
         billing_account = MockBillingAccountWithSeats()
         
@@ -84,15 +87,8 @@ class TestCheckoutSerializerWithBillingAccount(TestCase):
         # Reload settings to pick up override
         drf_stripe_settings.reload()
         
-        # Create a mock billing account without seats field
-        class MockBillingAccountWithoutSeats:
-            pk = 1
-            stripe_customer_id = None
-            
-            def get_or_create_stripe_customer(self, stripe_module, **kwargs):
-                return "cus_test123"
-        
-        billing_account = MockBillingAccountWithoutSeats()
+        # Use base mock without seats field
+        billing_account = self.MockBillingAccountBase()
         
         # This is how the serializer gets the quantity
         quantity = getattr(billing_account, "seats", drf_stripe_settings.DEFAULT_SUBSCRIPTION_QUANTITY)
