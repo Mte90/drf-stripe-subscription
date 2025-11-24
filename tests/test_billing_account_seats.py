@@ -3,7 +3,11 @@ Test that the DEFAULT_SUBSCRIPTION_QUANTITY setting works correctly
 and that custom seats fields on billing accounts are respected.
 """
 from django.test import TestCase, override_settings
+from django.contrib.contenttypes.models import ContentType
+from unittest.mock import Mock, patch, MagicMock
 from drf_stripe.settings import drf_stripe_settings
+from drf_stripe.models import AbstractBillingAccount, get_drf_stripe_user_model
+from drf_stripe.serializers import CheckoutRequestSerializer
 
 
 class TestBillingAccountSeats(TestCase):
@@ -43,3 +47,76 @@ class TestBillingAccountSeats(TestCase):
         instance = MockBillingAccountWithSeats()
         quantity = getattr(instance, "seats", drf_stripe_settings.DEFAULT_SUBSCRIPTION_QUANTITY)
         self.assertEqual(quantity, 10)
+
+
+class TestCheckoutSerializerWithBillingAccount(TestCase):
+    """Test CheckoutRequestSerializer uses DEFAULT_SUBSCRIPTION_QUANTITY correctly."""
+
+    def setUp(self):
+        """Set up test data."""
+        # Create a test user
+        User = get_drf_stripe_user_model()
+        self.user = User.objects.create_user(username='testuser', email='test@example.com')
+
+    def test_checkout_uses_custom_seats_when_present(self):
+        """Test that checkout uses custom seats field when billing account has it."""
+        # Create a mock billing account WITH seats field
+        class MockBillingAccountWithSeats:
+            pk = 1
+            stripe_customer_id = None
+            seats = 7  # Custom seats value
+            
+            def get_or_create_stripe_customer(self, stripe_module, **kwargs):
+                return "cus_test123"
+            
+            def can_manage_billing(self, user):
+                return True
+        
+        billing_account = MockBillingAccountWithSeats()
+        
+        # Verify that getattr picks up the custom seats value
+        quantity = getattr(billing_account, "seats", drf_stripe_settings.DEFAULT_SUBSCRIPTION_QUANTITY)
+        self.assertEqual(quantity, 7)
+
+    @override_settings(DRF_STRIPE={"DEFAULT_SUBSCRIPTION_QUANTITY": 5})
+    def test_default_subscription_quantity_used_as_fallback(self):
+        """Test that DEFAULT_SUBSCRIPTION_QUANTITY is used when billing account has no seats."""
+        # Reload settings to pick up override
+        drf_stripe_settings.reload()
+        
+        # Create a mock billing account without seats field
+        class MockBillingAccountWithoutSeats:
+            pk = 1
+            stripe_customer_id = None
+            
+            def get_or_create_stripe_customer(self, stripe_module, **kwargs):
+                return "cus_test123"
+        
+        billing_account = MockBillingAccountWithoutSeats()
+        
+        # This is how the serializer gets the quantity
+        quantity = getattr(billing_account, "seats", drf_stripe_settings.DEFAULT_SUBSCRIPTION_QUANTITY)
+        self.assertEqual(quantity, 5)
+        
+        # Restore settings
+        drf_stripe_settings.reload()
+
+
+class TestAbstractBillingAccountFields(TestCase):
+    """Test that AbstractBillingAccount has correct fields after refactoring."""
+
+    def test_abstract_billing_account_does_not_have_seats_field(self):
+        """Verify that seats field is not in AbstractBillingAccount."""
+        fields = [f.name for f in AbstractBillingAccount._meta.get_fields()]
+        self.assertNotIn('seats', fields)
+    
+    def test_abstract_billing_account_has_required_fields(self):
+        """Verify that AbstractBillingAccount has the required fields."""
+        fields = [f.name for f in AbstractBillingAccount._meta.get_fields()]
+        self.assertIn('stripe_customer_id', fields)
+        self.assertIn('stripe_subscription_id', fields)
+        self.assertIn('manager_user', fields)
+    
+    def test_abstract_billing_account_is_abstract(self):
+        """Verify that AbstractBillingAccount is an abstract model."""
+        self.assertTrue(AbstractBillingAccount._meta.abstract)

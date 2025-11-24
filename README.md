@@ -328,8 +328,6 @@ Key points
 - By default DRF_STRIPE['BILLING_ACCOUNT_MODEL'] is None and the package behaves exactly as before (legacy per-user).
 - To enable billing-account flows, implement a concrete BillingAccount in your project (extend AbstractBillingAccount),
   and configure DRF_STRIPE['BILLING_ACCOUNT_MODEL'] to point to it (e.g. "myapp.OrganizationBillingAccount").
-- Subscription quantity (seats): By default, the package uses DRF_STRIPE['DEFAULT_SUBSCRIPTION_QUANTITY'] (defaults to 1).
-  If you need per-account seat control, add a 'seats' field to your concrete billing account model.
 
 How to opt-in (recommended pattern)
 1) Implement your BillingAccount in your app, extending the abstract base:
@@ -345,24 +343,12 @@ class OrganizationBillingAccount(AbstractBillingAccount):
         return self.organization
 ```
 
-If you need per-account seat management, add a `seats` field:
-
-```python
-class OrganizationBillingAccount(AbstractBillingAccount):
-    organization = models.OneToOneField("myapp.Organization", on_delete=models.CASCADE, related_name="billing_account")
-    seats = models.PositiveIntegerField(default=1)  # Optional: control seats per billing account
-
-    def get_owner(self):
-        return self.organization
-```
-
 2) Configure in settings.py:
 
 ```python
 DRF_STRIPE = {
     # ... other settings ...
     "BILLING_ACCOUNT_MODEL": "myapp.OrganizationBillingAccount",
-    "DEFAULT_SUBSCRIPTION_QUANTITY": 1,  # Optional: set global default for subscription quantity
 }
 ```
 
