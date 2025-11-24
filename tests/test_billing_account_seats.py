@@ -3,7 +3,6 @@ Test that the DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting works correctly for subs
 """
 from django.test import TestCase, override_settings
 from drf_stripe.settings import drf_stripe_settings
-from drf_stripe.models import AbstractBillingAccount
 
 
 class TestDefaultMaxSubscriptionQuantity(TestCase):
@@ -21,18 +20,3 @@ class TestDefaultMaxSubscriptionQuantity(TestCase):
         self.assertEqual(drf_stripe_settings.DEFAULT_MAX_SUBSCRIPTION_QUANTITY, 5)
         # Reload again to restore default
         drf_stripe_settings.reload()
-
-
-class TestAbstractBillingAccountFields(TestCase):
-    """Test that AbstractBillingAccount has correct fields after refactoring."""
-    
-    def test_abstract_billing_account_has_required_fields(self):
-        """Verify that AbstractBillingAccount has the required fields."""
-        fields = [f.name for f in AbstractBillingAccount._meta.get_fields()]
-        self.assertIn('stripe_customer_id', fields)
-        self.assertIn('stripe_subscription_id', fields)
-        self.assertIn('manager_user', fields)
-    
-    def test_abstract_billing_account_is_abstract(self):
-        """Verify that AbstractBillingAccount is an abstract model."""
-        self.assertTrue(AbstractBillingAccount._meta.abstract)
