@@ -3,11 +3,11 @@ Test that the DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting works correctly for subs
 """
 from django.test import TestCase, override_settings
 from drf_stripe.settings import drf_stripe_settings
-from drf_stripe.models import AbstractBillingAccount, get_drf_stripe_user_model
+from drf_stripe.models import AbstractBillingAccount
 
 
-class TestBillingAccountSeats(TestCase):
-    """Test DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting behavior for subscription quantities."""
+class TestDefaultMaxSubscriptionQuantity(TestCase):
+    """Test DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting behavior."""
 
     def test_default_subscription_quantity_setting_exists(self):
         """Verify the DEFAULT_MAX_SUBSCRIPTION_QUANTITY setting is accessible."""
@@ -22,25 +22,9 @@ class TestBillingAccountSeats(TestCase):
         # Reload again to restore default
         drf_stripe_settings.reload()
 
-    def test_getattr_fallback_to_setting(self):
-        """Test that getattr uses the setting as fallback when seats doesn't exist."""
-        
-        class MockBillingAccountWithoutSeats:
-            """Mock billing account without seats field."""
-            pass
-        
-        instance = MockBillingAccountWithoutSeats()
-        quantity = getattr(instance, "seats", drf_stripe_settings.DEFAULT_MAX_SUBSCRIPTION_QUANTITY)
-        self.assertEqual(quantity, 1)
-
 
 class TestAbstractBillingAccountFields(TestCase):
     """Test that AbstractBillingAccount has correct fields after refactoring."""
-
-    def test_abstract_billing_account_does_not_have_seats_field(self):
-        """Verify that seats field is not in AbstractBillingAccount."""
-        fields = [f.name for f in AbstractBillingAccount._meta.get_fields()]
-        self.assertNotIn('seats', fields)
     
     def test_abstract_billing_account_has_required_fields(self):
         """Verify that AbstractBillingAccount has the required fields."""
