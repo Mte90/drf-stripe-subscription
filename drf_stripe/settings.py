@@ -23,6 +23,10 @@ DEFAULTS = {
     # If None, billing-account flows are disabled and legacy per-user behaviour is used.
     # Example: "myapp.OrganizationBillingAccount"
     "BILLING_ACCOUNT_MODEL": None,
+    # Default quantity for subscription line items when using billing accounts.
+    # This is used when the billing account instance doesn't have a 'seats' attribute.
+    # Can be overridden by adding a 'seats' field to your custom billing account model.
+    "DEFAULT_SUBSCRIPTION_QUANTITY": 1,
 }
 
 

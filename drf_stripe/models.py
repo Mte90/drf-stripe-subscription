@@ -99,10 +99,14 @@ class Price(models.Model):
 
 
 class AbstractBillingAccount(models.Model):
-    """Abstract billing account to extend in the project for multi-user/group billing flows."""
+    """Abstract billing account to extend in the project for multi-user/group billing flows.
+    
+    Note: The 'seats' field has been removed from this abstract model. If you need per-account
+    seat control, add a 'seats' field to your concrete billing account model. Otherwise, the
+    DRF_STRIPE['DEFAULT_SUBSCRIPTION_QUANTITY'] setting will be used for subscription quantities.
+    """
     stripe_customer_id = models.CharField(max_length=256, null=True, blank=True)
     stripe_subscription_id = models.CharField(max_length=256, null=True, blank=True)
-    seats = models.PositiveIntegerField(default=1)
     manager_user = models.ForeignKey(
         get_drf_stripe_user_model_name(),
         null=True,
