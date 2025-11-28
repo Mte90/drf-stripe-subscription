@@ -4,8 +4,8 @@ from django.contrib.auth import get_user_model
 from drf_stripe.models import AbstractBillingAccount
 
 
-class Company(AbstractBillingAccount):
-    """Test company model that extends AbstractBillingAccount."""
+class CustomBilling(AbstractBillingAccount):
+    """Test custom billing model that extends AbstractBillingAccount."""
     name = models.CharField(max_length=255)
 
     class Meta:

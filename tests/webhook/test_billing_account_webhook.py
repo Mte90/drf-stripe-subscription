@@ -7,7 +7,7 @@ from drf_stripe.models import Subscription, SubscriptionItem, StripeUser
 from drf_stripe.settings import drf_stripe_settings
 from drf_stripe.stripe_webhooks.handler import handle_webhook_event
 from tests.base import BaseTest
-from tests.models import Company
+from tests.models import CustomBilling
 
 
 class TestWebhookBillingAccountIntegration(BaseTest):
@@ -15,14 +15,14 @@ class TestWebhookBillingAccountIntegration(BaseTest):
 
     def setUp(self) -> None:
         self.setup_product_prices()
-        # Create a user and a company with that user as manager
+        # Create a user and a custom billing account with that user as manager
         self.user = get_user_model().objects.create(
             username="tester",
             email="tester1@example.com",
             password="12345"
         )
-        self.company = Company.objects.create(
-            name="Test Company",
+        self.custom_billing = CustomBilling.objects.create(
+            name="Test CustomBilling",
             manager_user=self.user
         )
         # Create StripeUser for the test user
@@ -34,7 +34,7 @@ class TestWebhookBillingAccountIntegration(BaseTest):
     def get_billing_settings(self):
         """Return DRF_STRIPE settings with BILLING_ACCOUNT_MODEL configured."""
         settings_copy = dict(drf_stripe_settings.user_settings)
-        settings_copy['BILLING_ACCOUNT_MODEL'] = 'tests.Company'
+        settings_copy['BILLING_ACCOUNT_MODEL'] = 'tests.CustomBilling'
         return settings_copy
 
     def test_webhook_subscription_created_links_to_billing_account(self):
@@ -53,14 +53,14 @@ class TestWebhookBillingAccountIntegration(BaseTest):
             self.assertEqual(subscription.stripe_user.customer_id, "cus_tester")
 
             # Check billing account content type and object id are set
-            company_ct = ContentType.objects.get_for_model(Company)
-            self.assertEqual(subscription.billing_account_content_type, company_ct)
-            self.assertEqual(subscription.billing_account_object_id, self.company.pk)
+            custom_billing_ct = ContentType.objects.get_for_model(CustomBilling)
+            self.assertEqual(subscription.billing_account_content_type, custom_billing_ct)
+            self.assertEqual(subscription.billing_account_object_id, self.custom_billing.pk)
 
             # Check billing account fields are updated
-            self.company.refresh_from_db()
-            self.assertEqual(self.company.stripe_customer_id, "cus_tester")
-            self.assertEqual(self.company.stripe_subscription_id, "sub_1KHlYHL14ex1CGCiIBo8Xk5p")
+            self.custom_billing.refresh_from_db()
+            self.assertEqual(self.custom_billing.stripe_customer_id, "cus_tester")
+            self.assertEqual(self.custom_billing.stripe_subscription_id, "sub_1KHlYHL14ex1CGCiIBo8Xk5p")
 
             drf_stripe_settings.reload()
 
@@ -79,7 +79,7 @@ class TestWebhookBillingAccountIntegration(BaseTest):
         self.assertIsNone(subscription.billing_account_content_type)
         self.assertIsNone(subscription.billing_account_object_id)
 
-        # Company should not be updated
-        self.company.refresh_from_db()
-        self.assertIsNone(self.company.stripe_customer_id)
-        self.assertIsNone(self.company.stripe_subscription_id)
+        # CustomBilling should not be updated
+        self.custom_billing.refresh_from_db()
+        self.assertIsNone(self.custom_billing.stripe_customer_id)
+        self.assertIsNone(self.custom_billing.stripe_subscription_id)
