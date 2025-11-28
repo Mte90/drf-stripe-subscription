@@ -2,13 +2,12 @@ from itertools import chain
 from operator import attrgetter
 from typing import Literal, List
 
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 
 from drf_stripe.stripe_api.api import stripe_api as stripe
-from .customers import get_or_create_stripe_user, CreatingNewUsersDisabledError, get_billing_model, find_billing_account
+from .customers import get_or_create_stripe_user, CreatingNewUsersDisabledError, get_billing_model, find_billing_account, update_billing_account_subscription
 from ..models import Subscription, Price, SubscriptionItem
 from ..stripe_models.subscription import ACCESS_GRANTING_STATUSES, StripeSubscriptions
 
@@ -35,11 +34,6 @@ def stripe_api_update_subscriptions(status: STATUS_ARG = None, limit: int = 100,
     Retrieve all subscriptions. Updates database.
 
     Called from management command.
-
-    When BILLING_ACCOUNT_MODEL is configured, this function will also:
-    - Find the billing account by stripe_customer_id or by manager_user
-    - Update the billing account's stripe_customer_id and stripe_subscription_id fields
-    - Link the subscription to the billing account via billing_account_content_type and billing_account_object_id
 
     :param STATUS_ARG status: subscription status to retrieve.
     :param int limit: number of instances to retrieve( between 0 and 100).
@@ -82,23 +76,9 @@ def stripe_api_update_subscriptions(status: STATUS_ARG = None, limit: int = 100,
             if billing_model:
                 user = stripe_user.user if stripe_user else None
                 billing_account = find_billing_account(billing_model, customer_id=subscription.customer, user=user)
-
-                if billing_account:
-                    # Update billing account stripe fields
-                    update_fields = []
-                    if not billing_account.stripe_customer_id:
-                        billing_account.stripe_customer_id = subscription.customer
-                        update_fields.append("stripe_customer_id")
-                    if billing_account.stripe_subscription_id != subscription.id:
-                        billing_account.stripe_subscription_id = subscription.id
-                        update_fields.append("stripe_subscription_id")
-                    if update_fields:
-                        billing_account.save(update_fields=update_fields)
-                        print(f"Updated billing account {billing_account.pk} with stripe fields")
-
-                    # Link subscription to billing account
-                    subscription_defaults["billing_account_content_type"] = ContentType.objects.get_for_model(billing_model)
-                    subscription_defaults["billing_account_object_id"] = billing_account.pk
+                subscription_defaults = update_billing_account_subscription(
+                    billing_model, billing_account, subscription.customer, subscription.id, subscription_defaults
+                )
 
             _, created = Subscription.objects.update_or_create(
                 subscription_id=subscription.id,

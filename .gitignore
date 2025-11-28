@@ -148,3 +148,6 @@ NOTE*.csv
 
 .idea
 .pylintrc
+
+# Test migrations (auto-generated)
+tests/migrations/
