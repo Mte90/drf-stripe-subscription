@@ -48,9 +48,7 @@ def find_billing_account(billing_model, customer_id=None, user=None):
     # First try by customer_id
     if customer_id:
         try:
-            ba = billing_model.objects.filter(stripe_customer_id=customer_id).first()
-            if ba:
-                return ba
+            return billing_model.objects.filter(stripe_customer_id=customer_id).first()
         except Exception:
             pass
     
