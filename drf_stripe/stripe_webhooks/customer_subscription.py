@@ -1,4 +1,7 @@
+from django.contrib.contenttypes.models import ContentType
+
 from drf_stripe.models import Subscription, SubscriptionItem, StripeUser
+from drf_stripe.stripe_api.customers import get_billing_model, find_billing_account
 from drf_stripe.stripe_models.event import StripeSubscriptionEventData
 
 
@@ -16,19 +19,44 @@ def _handle_customer_subscription_event_data(data: StripeSubscriptionEventData):
 
     stripe_user = StripeUser.objects.get(customer_id=customer)
 
+    subscription_defaults = {
+        "stripe_user": stripe_user,
+        "period_start": period_start,
+        "period_end": period_end,
+        "cancel_at": cancel_at,
+        "cancel_at_period_end": cancel_at_period_end,
+        "ended_at": ended_at,
+        "status": status,
+        "trial_end": trial_end,
+        "trial_start": trial_start
+    }
+
+    # Link to billing account if configured
+    billing_model = get_billing_model()
+    if billing_model:
+        user = stripe_user.user if stripe_user else None
+        billing_account = find_billing_account(billing_model, customer_id=customer, user=user)
+
+        if billing_account:
+            # Update billing account stripe fields
+            update_fields = []
+            if not billing_account.stripe_customer_id:
+                billing_account.stripe_customer_id = customer
+                update_fields.append("stripe_customer_id")
+            if billing_account.stripe_subscription_id != subscription_id:
+                billing_account.stripe_subscription_id = subscription_id
+                update_fields.append("stripe_subscription_id")
+            if update_fields:
+                billing_account.save(update_fields=update_fields)
+
+            # Link subscription to billing account
+            subscription_defaults["billing_account_content_type"] = ContentType.objects.get_for_model(billing_model)
+            subscription_defaults["billing_account_object_id"] = billing_account.pk
+
     subscription, created = Subscription.objects.update_or_create(
         subscription_id=subscription_id,
-        defaults={
-            "stripe_user": stripe_user,
-            "period_start": period_start,
-            "period_end": period_end,
-            "cancel_at": cancel_at,
-            "cancel_at_period_end": cancel_at_period_end,
-            "ended_at": ended_at,
-            "status": status,
-            "trial_end": trial_end,
-            "trial_start": trial_start
-        })
+        defaults=subscription_defaults
+    )
 
     subscription.items.all().delete()
     _create_subscription_items(data)
