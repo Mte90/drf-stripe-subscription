@@ -194,6 +194,8 @@ Some of the checkout parameters are specified in `DRF_STRIPE` settings:
 
 `CHECKOUT_CANCEL_URL_PATH`: The checkout session cancel redirect url path.
 
+`CUSTOMER_PORTAL_RETURN_URL_PATH`: The customer portal session return url path, defaults to `"manage-subscription"`.
+
 `PAYMENT_METHOD_TYPES`: The default [payment method types](https://stripe.com/docs/api/checkout/sessions/create#create_checkout_session-payment_method_types)
 , defaults to `["card"]`.
 
