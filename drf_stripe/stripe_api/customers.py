@@ -266,10 +266,7 @@ def _get_or_create_stripe_user_from_user_id_email(user_id, user_email: str, cust
     :param str user_email: user email address
     :param str customer_id: Stripe customer id (optional)
     """
-    defaults = {}
-    if customer_id:
-        defaults['customer_id'] = customer_id
-    
+    defaults = {'customer_id': customer_id} if customer_id else {}
     stripe_user, created = StripeUser.objects.get_or_create(user_id=user_id, defaults=defaults)
 
     if created and not customer_id:
